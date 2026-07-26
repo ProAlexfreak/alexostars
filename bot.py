@@ -14,59 +14,36 @@ ASK_AMOUNT = 1
 
 
 # 🌟 START COMMAND (Handles deep links + UI)
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
+async def get_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        # 🔥 Clean input properly
+        text = update.message.text.strip()
 
-    # 🎯 Handle payment deep link
-    if args:
-        data = args[0]
+        # Allow only digits
+        if not text.isdigit():
+            raise ValueError
 
-        if data.startswith("pay_"):
-            try:
-                amount = int(data.split("_")[1])
+        amount = int(text)
 
-                prices = [LabeledPrice("🌟 Premium Access", amount)]
+        bot_username = (await context.bot.get_me()).username
+        link = f"https://t.me/{bot_username}?start=pay_{amount}"
 
-                await update.message.reply_invoice(
-                    title="🌟 Premium Membership",
-                    description=(
-                        "✨ Unlock Exclusive Features\n"
-                        "🚀 Instant Activation\n"
-                        "🔒 100% Secure Payment\n\n"
-                        f"💳 Amount: {amount} Stars"
-                    ),
-                    payload=f"pay_{amount}",
-                    provider_token=config.PROVIDER_TOKEN,
-                    currency="XTR",
-                    prices=prices,
-                )
-                return
-            except:
-                pass
+        await update.message.reply_text(
+            "✅ *Payment Link Generated*\n\n"
+            f"💳 Amount: *{amount} Stars*\n"
+            f"🔗 Link:\n{link}\n\n"
+            "📤 Share this link with users",
+            parse_mode="Markdown"
+        )
 
-    # 💎 Normal start UI
-    await update.message.reply_text(
-        "👋 *Welcome to Premium Access Bot*\n\n"
-        "✨ Get access to exclusive premium features\n"
-        "⚡ Fast • Secure • Instant Activation\n\n"
-        "💳 Use a payment link to unlock premium\n\n"
-        "🔐 Admin: /makelink",
-        parse_mode="Markdown"
-    )
-
-
-# 🔐 ADMIN COMMAND
-async def makelink(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != config.ADMIN_ID:
-        await update.message.reply_text("🚫 *Access Denied*", parse_mode="Markdown")
         return ConversationHandler.END
 
-    await update.message.reply_text(
-        "💰 *Create Payment Link*\n\n"
-        "Enter amount in Stars (example: 50)",
-        parse_mode="Markdown"
-    )
-    return ASK_AMOUNT
+    except:
+        await update.message.reply_text(
+            "❌ Invalid input!\n\n"
+            "👉 Send only numbers (example: 10)",
+        )
+        return ASK_AMOUNT
 
 
 # 🔗 GENERATE LINK
